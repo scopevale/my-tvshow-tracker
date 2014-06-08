@@ -1,3 +1,4 @@
+var config = require('./config');
 var express = require('express');
 var path = require('path');
 var logger = require('morgan');
@@ -12,9 +13,10 @@ var _ = require('lodash');
 var session = require('express-session');
 var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
-var agenda = require('agenda')({ db: { address: 'mongodb://scopevale_user:b5AQrCmA@ds029827.mongolab.com:29827/scopevale_demo' } });
+var agenda = require('agenda')({ db: { address: config.mongodb.uri } });
 var sugar = require('sugar');
 var nodemailer = require('nodemailer');
+var compress = require('compression');
 
 // mongoose DB schemas
 var showSchema = new mongoose.Schema({
@@ -71,7 +73,50 @@ var User = mongoose.model('User', userSchema);
 var Show = mongoose.model('Show', showSchema);
 
 // connect to MongoLab
-mongoose.connect('mongodb://scopevale_user:b5AQrCmA@ds029827.mongolab.com:29827/scopevale_demo');
+mongoose.connect(config.mongodb.uri);
+
+// agenda & nodemailer (sendgrid) stuff
+agenda.define('send email alert', function(job, done) {
+  Show.findOne({ name: job.attrs.data }).populate('subscribers').exec(function(err, show) {
+    var emails = show.subscribers.map(function(user) {
+      return user.email;
+    });
+
+    var upcomingEpisode = show.episodes.filter(function(episode) {
+      return new Date(episode.firstAired) > new Date();
+    })[0];
+
+    var smtpTransport = nodemailer.createTransport('SMTP', {
+      service: 'SendGrid',
+      auth: { user: config.smtp.auth.user, pass: config.smtp.auth.pass }
+    });
+
+    var mailOptions = {
+      from: config.smtp.from,
+      to: emails.join(','),
+      subject: show.name + ' is starting soon!',
+      text: show.name + ' starts in less than 2 hours on ' + show.network + '.\n\n' +
+        'Episode ' + upcomingEpisode.episodeNumber + ' Overview\n\n' + upcomingEpisode.overview
+    };
+
+    smtpTransport.sendMail(mailOptions, function(error, response) {
+      console.log('Message sent: ' + response.message);
+      smtpTransport.close();
+      done();
+    });
+  });
+});
+
+agenda.start();
+
+agenda.on('start', function(job) {
+  console.log("Job %s starting", job.attrs.name);
+});
+
+agenda.on('complete', function(job) {
+  console.log("Job %s finished", job.attrs.name);
+});
+
 
 // passport authentication
 passport.serializeUser(function(user, done) {
@@ -103,7 +148,8 @@ function ensureAuthenticated(req, res, next) {
 
 // middleware
 var app = express();
-app.set('port', process.env.PORT || 3000);
+app.set('port', config.port);
+app.use(compress());
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded());
@@ -111,7 +157,7 @@ app.use(cookieParser());
 app.use(session({ secret: 'keyboard cat' }));
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), { maxAge: 86400000 }));
 app.use(function(req, res, next) {
   if (req.user) {
     res.cookie('user', JSON.stringify(req.user));
@@ -188,7 +234,7 @@ app.get('/api/shows/:id', function(req, res, next) {
 });
 
 app.post('/api/shows', function(req, res, next) {
-  var apiKey = '336AB122132635A5';
+  var apiKey = config.thetvdb.apikey;
   var parser = xml2js.Parser({
     explicitArray: false,
     normalizeTags: true
@@ -254,6 +300,8 @@ app.post('/api/shows', function(req, res, next) {
     if (err) return next(err);
     show.save(function(err) {
       if (err) return next(err);
+      var alertDate = Date.create('Next ' + show.airsDayOfWeek + ' at ' + show.airsTime).rewind({ hour: 2});
+      agenda.schedule(alertDate, 'send email alert', show.name).repeatEvery('1 week');        
       res.send(200);
     });
   });
