@@ -12,7 +12,9 @@ var _ = require('lodash');
 var session = require('express-session');
 var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
-
+var agenda = require('agenda')({ db: { address: 'mongodb://scopevale_user:b5AQrCmA@ds029827.mongolab.com:29827/scopevale_demo' } });
+var sugar = require('sugar');
+var nodemailer = require('nodemailer');
 
 // mongoose DB schemas
 var showSchema = new mongoose.Schema({
