@@ -8,7 +8,8 @@ pids
 *.seed
 
 # Config stuff
-config.js
+.bashrc
+.bash_aliases
 
 # Dist
 public/javascripts/app.min.js
