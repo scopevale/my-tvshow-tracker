@@ -24,9 +24,9 @@ gulp.task('compress', function() {
     'public/filters/*.js',
     'public/directives/*.js'
   ])
-    .pipe(concat('javascripts/app.min.js'))
+    .pipe(concat('app.min.js'))
     .pipe(uglify())
-    .pipe(gulp.dest('public'));
+    .pipe(gulp.dest('public/javascripts'));
 });
 
 gulp.task('templates', function() {
