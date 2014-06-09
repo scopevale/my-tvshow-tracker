@@ -212,13 +212,17 @@ app.post('/api/unsubscribe', ensureAuthenticated, function(req, res, next) {
 });
 
 app.get('/api/shows', function(req, res, next) {
-  var query = Show.find();
+  // only get the name, poster & episodes fields (I really only want a count of the episodes)
+  // but can't work out how to do it at this time
+  var query = Show.find().select('name poster episodes').sort({rating: 'desc'});
+    
   if (req.query.genre) {
     query.where({ genre: req.query.genre });
   } else if (req.query.alphabet) {
     query.where({ name: new RegExp('^' + '[' + req.query.alphabet + ']', 'i') });
   } else {
-    query.limit(12);
+    // if no filter - just get the top 12 shows with rating >= 8.5  
+    query.where('rating').gte(8.5).limit(12);      
   }
   query.exec(function(err, shows) {
     if (err) return next(err);

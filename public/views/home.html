@@ -23,7 +23,9 @@
     </div>
     <div class="panel-body">
       <div class="row show-list">
-        <div class="col-xs-4 col-md-3" ng-repeat="show in shows | filter:query | orderBy:'rating':true">
+<!--    sorting in AngularJS doesn't seem to work - so do it in mongoose instead -->
+<!--    <div class="col-xs-4 col-md-3" ng-repeat="show in shows | filter:query | orderBy:'rating':true"> -->
+        <div class="col-xs-4 col-md-3" ng-repeat="show in shows | filter:query">
           <a href="/shows/{{show._id}}">
             <img class="img-rounded" ng-src="{{show.poster}}" width="100%"/>
           </a>
