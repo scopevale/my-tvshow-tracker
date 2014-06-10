@@ -15,7 +15,7 @@ angular.module('MyApp')
     $scope.genres = ['Action', 'Adventure', 'Animation', 'Children', 'Comedy',
       'Crime', 'Documentary', 'Drama', 'Family', 'Fantasy', 'Food',
       'Home and Garden', 'Horror', 'Mini-Series', 'Mystery', 'News', 'Reality',
-      'Romance', 'Sci-Fi', 'Sport', 'Suspense', 'Talk Show', 'Thriller',
+      'Romance', 'Science-Fiction', 'Sport', 'Suspense', 'Talk Show', 'Thriller',
       'Travel'];
 
     $scope.headingTitle = 'Top 12 Shows';

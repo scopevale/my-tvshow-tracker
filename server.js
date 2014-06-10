@@ -87,20 +87,22 @@ agenda.define('send email alert', function(job, done) {
       return new Date(episode.firstAired) > new Date();
     })[0];
       
-//     console.log(show);  
-//     console.log(upcomingEpisode); 
-//     console.log(typeof upcomingEpisode);  
-
     if(typeof upcomingEpisode === 'undefined') {
+        console.log('hit no upcoming episodes condition for %s', show.name);
         job.fail(new Error('no upcoming episodes'));
-		job.remove();
-        return false;
+        job.remove(function(err) {
+    		if(!err) console.log("Successfully removed %s from collection", show.name);
+		})
+        return;
     }
       
     if (emails.length === 0) {
-        job.fail(new Error('no subscribers'));
-		job.save();
-        return false;        
+        console.log('hit no subscribers condition for %s', show.name);
+        job.fail(new Error('no subscribers yet'));
+        job.save(function(err) {
+            if(!err) console.log("Successfully saved %s to collection", show.name);
+        })
+        return;
     }  
       
     var smtpTransport = nodemailer.createTransport('SMTP', {
@@ -134,7 +136,7 @@ agenda.on('complete', function(job) {
   console.log("Job %s finished", job.attrs.name);
 });
 
-agenda.on('fail:send email alert', function (err, job) {
+agenda.on('fail', function (err, job) {
     console.log("Job %s failed with error: ", job.attrs.name, err.message);    
 });
 
@@ -273,6 +275,11 @@ app.post('/api/shows', function(req, res, next) {
       request.get('http://thetvdb.com/api/GetSeries.php?seriesname=' + seriesName, function(error, response, body) {
         if (error) return next(error);
         parser.parseString(body, function(err, result) {
+          console.log(result);
+          console.log(result.data.length);
+          if (typeof result.data === 'undefined' || result.data.length <= 1) {
+			return next(Error('show not found'));              
+          }
           var seriesId = result.data.series.seriesid || result.data.series[0].seriesid;
           callback(err, seriesId);
         });

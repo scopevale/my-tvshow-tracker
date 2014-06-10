@@ -10,6 +10,15 @@ angular.module('MyApp')
             type: 'success',
             duration: 3
           });
-        })
+        }),
+        .error(function () {
+          $alert({
+            content: 'TV show not found in TVDB.',
+            placement: 'top-right',
+            type: 'error',
+            duration: 3
+          });            
+          $scope.showName = '';
+        })  
     };
   }]);
