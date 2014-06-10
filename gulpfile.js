@@ -49,7 +49,7 @@ gulp.task('templates', function() {
 
 gulp.task('watch', function() {
   gulp.watch('public/stylesheets/*.scss', ['sass']);
-  gulp.watch(['public/**/*.js', '!public/javascripts/app.min.js', '!public/javascripts/templates.js', '!public/vendor'], ['compress']);
+  gulp.watch(['public/**/*.js', '!public/javascripts/app.min.js', '!public/javascripts/templates.js', '!public/vendor'], ['compress', 'templates']);
 });
 
 gulp.task('default', ['sass', 'compress', 'templates', 'watch']);
