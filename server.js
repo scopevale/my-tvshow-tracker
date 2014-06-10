@@ -275,10 +275,9 @@ app.post('/api/shows', function(req, res, next) {
       request.get('http://thetvdb.com/api/GetSeries.php?seriesname=' + seriesName, function(error, response, body) {
         if (error) return next(error);
         parser.parseString(body, function(err, result) {
-          console.log(result);
-          console.log(result.data.length);
+          // if show is not found result.data is '\n' - and length is 1  
           if (typeof result.data === 'undefined' || result.data.length <= 1) {
-			return next(Error('show not found'));              
+			return next(Error('TV show not found in the TVDB'));
           }
           var seriesId = result.data.series.seriesid || result.data.series[0].seriesid;
           callback(err, seriesId);
