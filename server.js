@@ -85,7 +85,23 @@ agenda.define('send email alert', function(job, done) {
     var upcomingEpisode = show.episodes.filter(function(episode) {
       return new Date(episode.firstAired) > new Date();
     })[0];
+      
+//     console.log(show);  
+//     console.log(upcomingEpisode); 
+//     console.log(typeof upcomingEpisode);  
 
+    if(typeof upcomingEpisode === 'undefined') {
+        job.fail(new Error('no upcoming episodes'));
+		job.remove();
+        return false;
+    }
+      
+    if (emails.length === 0) {
+        job.fail(new Error('no subscribers'));
+		job.save();
+        return false;        
+    }  
+      
     var smtpTransport = nodemailer.createTransport('SMTP', {
       service: 'SendGrid',
       auth: { user: config.smtp.auth.user, pass: config.smtp.auth.pass }
@@ -117,6 +133,9 @@ agenda.on('complete', function(job) {
   console.log("Job %s finished", job.attrs.name);
 });
 
+agenda.on('fail:send email alert', function (err, job) {
+    console.log("Job %s failed with error: ", job.attrs.name, err.message);    
+});
 
 // passport authentication
 passport.serializeUser(function(user, done) {
